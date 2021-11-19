@@ -1,0 +1,33 @@
+pipeline {  
+    environment {
+        registry = "ruslanlee/docker-test"
+        registryCredential = 'Docker_Registry_ID'
+    }  
+    agent any
+    stages {
+        stage('Cloning Git') {
+          steps { git 'https://github.com/ruslanlee88/myDockerWebProject.git' }
+        }  
+        stage('Building image') {
+            steps{
+                script { dockerImage = docker.build registry + ":$BUILD_NUMBER"  }
+            }
+        }
+        stage('Create and Run a Container') {
+            steps{
+                sh "docker container stop my_app"
+                sh "docker container rm my_app"
+                sh "docker container create --name my_app -p 3000:8080 $registry:$BUILD_NUMBER"
+                sh "docker container start my_app"
+            }
+        }
+        stage ("Stop-Container when done") {
+            steps{ echo "When done, stop the container and then remove the container...."  }    
+        }
+        stage('Remove Unused docker image') {
+            steps{  //sh "docker rmi $registry:$BUILD_NUMBER"
+                echo "delete the image..."
+             }
+        }
+    }
+}
